@@ -6,6 +6,28 @@ __pycache__/
 # C extensions
 *.so
 
+# If you are using PyCharm #
+# User-specific stuff
+.idea/*
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Environments
+.venv
+env/
+.env
+/logs/log.log
+
+# Migrations
+movie_collection/__init__.py
+accounts_engine/__init__.py
+accounts_engine/migrations/
+movies/__init__.py
+movies/migrations/
+
 # Distribution / packaging
 .Python
 build/
