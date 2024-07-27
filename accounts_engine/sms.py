@@ -30,7 +30,7 @@ def send_otp(contact, domain):
     try:
         otp = random.randint(1000, 9999)
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        body = f"Your Bot Lab Dynamics verification code is: {otp}"
+        body = f"Your OneFin verification code is: {otp}"
         phone_number = "+" + str(contact.country_code) + str(contact.national_number)
         message = client.messages.create(
             body=body,

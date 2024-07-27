@@ -241,3 +241,7 @@ AUTH_USER_MODEL = "accounts_engine.CustomUser"
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+
+MOVIE_API_USERNAME = os.getenv('MOVIE_API_USERNAME')
+MOVIE_API_PASSWORD = os.getenv('MOVIE_API_PASSWORD')
+MOVIE_API_URL = 'https://demo.credy.in/api/v1/maya/movies/'
