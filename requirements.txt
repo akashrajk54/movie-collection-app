@@ -7,6 +7,10 @@ phonenumbers==8.13.27
 django-filter==23.5
 django-phonenumber-field==7.3.0
 phonenumbers==8.13.27
-twilio==8.9.1
 retry==0.9.2
 django-redis==5.4.0
+factory-boy==3.3.0
+pytest==8.3.2
+pytest-django==4.8.0
+black==24.4.2
+flake8==7.1.0

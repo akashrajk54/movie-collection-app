@@ -11,7 +11,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     username = factory.Sequence(lambda n: f"user_{n}")
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
-    password = factory.PostGenerationMethodCall('set_password', 'password')
+    password = factory.PostGenerationMethodCall("set_password", "password")
 
 
 class GenreFactory(factory.django.DjangoModelFactory):
@@ -27,7 +27,7 @@ class MovieFactory(factory.django.DjangoModelFactory):
 
     title = factory.Sequence(lambda n: f"Movie {n}")
     description = "A test movie"
-    uuid = factory.Faker('uuid4')
+    uuid = factory.Faker("uuid4")
 
 
 class CollectionFactory(factory.django.DjangoModelFactory):
@@ -37,4 +37,4 @@ class CollectionFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     title = factory.Sequence(lambda n: f"Collection {n}")
     description = "A test collection"
-    uuid = factory.Faker('uuid4')
+    uuid = factory.Faker("uuid4")

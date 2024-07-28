@@ -9,8 +9,8 @@ router.register(r"collection", MovieCollectionViewSet, basename="movie-collectio
 
 
 urlpatterns = [
-    path('movies/', MovieAPIView.as_view(), name='movie-list'),
-    path('request-count/', RequestCountView.as_view(), name='request-count'),
-    path('request-count/reset/', ResetRequestCountView.as_view(), name='request-count-reset'),
+    path("movies/", MovieAPIView.as_view(), name="movie-list"),
+    path("request-count/", RequestCountView.as_view(), name="request-count"),
+    path("request-count/reset/", ResetRequestCountView.as_view(), name="request-count-reset"),
     path("", include(router.urls)),
 ]

@@ -20,7 +20,7 @@ from accounts_engine.utils import (
 from accounts_engine.models import CustomUser, InvalidatedToken
 from accounts_engine.serializers import CustomUserSerializer
 
-from accounts_engine.status_code import BAD_REQUEST, INTERNAL_SERVER_ERROR
+from accounts_engine.status_code import INTERNAL_SERVER_ERROR
 
 logger = logging.getLogger(__name__)
 logger_info = logging.getLogger("info")

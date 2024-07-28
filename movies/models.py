@@ -5,12 +5,12 @@ from accounts_engine.models import BaseClass, CustomUser
 
 class Collection(BaseClass):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='collections')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="collections")
     title = models.CharField(max_length=255)
     description = models.TextField()
 
     class Meta:
-        unique_together = ('user', 'title')
+        unique_together = ("user", "title")
 
     def __str__(self):
         return self.title
@@ -35,20 +35,20 @@ class Movie(BaseClass):
 
 class MovieGenre(BaseClass):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='movie_genres')
-    genre = models.ForeignKey(Genre, on_delete=models.CASCADE, related_name='movie_genres')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="movie_genres")
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE, related_name="movie_genres")
 
     def __str__(self):
         return f"{self.movie.title} - {self.genre.name}"
 
 
 class MovieCollection(BaseClass):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='movie_collections')
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name='movie_collections')
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='movie_collections')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="movie_collections")
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name="movie_collections")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="movie_collections")
 
     class Meta:
-        unique_together = ('user', 'collection', 'movie')
+        unique_together = ("user", "collection", "movie")
 
     def __str__(self):
         return f"{self.collection.title} - {self.movie.title}"

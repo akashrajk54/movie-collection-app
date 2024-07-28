@@ -1,11 +1,7 @@
 # views.py
 from django.db import transaction
 from rest_framework import status
-
-from .models import MovieCollection, Movie, Genre, MovieGenre, Collection
-
 import logging
-
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from django.core.cache import cache
@@ -15,14 +11,11 @@ from dotenv import load_dotenv
 from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
 
-from .models import MovieCollection
 from .serializers import CollectionSerializer
-
-from accounts_engine.status_code import INTERNAL_SERVER_ERROR
+from movies.models import MovieCollection, MovieGenre, Collection
 from movies.movie_service import MovieService, MovieCollectionService, CollectionUpdateService
 from rest_framework.response import Response
 from accounts_engine.utils import (
-    success_true_response,
     success_false_response,
 )
 
@@ -37,7 +30,7 @@ class MovieAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        page_number = request.query_params.get('page', 1)
+        page_number = request.query_params.get("page", 1)
         movie_service = MovieService()
 
         try:
@@ -72,7 +65,7 @@ class MovieCollectionViewSet(ModelViewSet):
         try:
             user = request.user
             data = request.data.copy()
-            data['user'] = user.id
+            data["user"] = user.id
             # collection_data = {
             #     'title': data.get('title'),
             #     'description': data.get('description'),
@@ -80,19 +73,16 @@ class MovieCollectionViewSet(ModelViewSet):
             # }
 
             # Create the collection
-            collection_serializer = CollectionSerializer(data=data, context={'request': request})
+            collection_serializer = CollectionSerializer(data=data, context={"request": request})
             collection_serializer.is_valid(raise_exception=True)
             collection = collection_serializer.save()
 
             # Initialize the movie service and process movies data
             self.initialize_service(user, collection)
-            self.MovieCollectionService.save_movies_and_link_genres(data.get('movies', []))
+            self.MovieCollectionService.save_movies_and_link_genres(data.get("movies", []))
 
-            collection_uuid = collection_serializer.data.get('uuid')
-            return Response(
-                {"collection_uuid": collection_uuid},
-                status=status.HTTP_201_CREATED
-            )
+            collection_uuid = collection_serializer.data.get("uuid")
+            return Response({"collection_uuid": collection_uuid}, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
             error_detail = e.detail
@@ -120,23 +110,27 @@ class MovieCollectionViewSet(ModelViewSet):
 
             # Get collections for the user
             collections = Collection.objects.filter(user=user)
-            collection_serializer = CollectionSerializer(collections, many=True, context={'request': request, 'view': self})
+            collection_serializer = CollectionSerializer(
+                collections, many=True, context={"request": request, "view": self}
+            )
 
             # Get favorite genres
             favorite_genres = (
                 MovieGenre.objects.filter(movie__movie_collections__user=user)
-                .values('genre__name')
-                .annotate(genre_count=Count('genre'))
-                .order_by('-genre_count')[:3]
+                .values("genre__name")
+                .annotate(genre_count=Count("genre"))
+                .order_by("-genre_count")[:3]
             )
 
-            favorite_genres_list = [genre['genre__name'] for genre in favorite_genres]
-            favorite_genres_str = ', '.join(favorite_genres_list)
+            favorite_genres_list = [genre["genre__name"] for genre in favorite_genres]
+            favorite_genres_str = ", ".join(favorite_genres_list)
 
-            return Response({
-                "is_success": True,
-                "data": {"collections": collection_serializer.data, "favourite_genres": favorite_genres_str}},
-                status=status.HTTP_200_OK
+            return Response(
+                {
+                    "is_success": True,
+                    "data": {"collections": collection_serializer.data, "favourite_genres": favorite_genres_str},
+                },
+                status=status.HTTP_200_OK,
             )
 
         except Exception as e:
@@ -149,20 +143,14 @@ class MovieCollectionViewSet(ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         try:
-            collection_uuid = kwargs.get('pk')
+            collection_uuid = kwargs.get("pk")
             data = request.data
             CollectionUpdateService.update_collection_and_movies(request.user, collection_uuid, data)
 
-            return Response(
-                {"collection_uuid": collection_uuid},
-                status=status.HTTP_200_OK
-            )
+            return Response({"collection_uuid": collection_uuid}, status=status.HTTP_200_OK)
 
         except Collection.DoesNotExist:
-            return Response(
-                {"success": False, "message": "Collection not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"success": False, "message": "Collection not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger_error.error(str(e))
             return Response(
@@ -172,17 +160,14 @@ class MovieCollectionViewSet(ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         try:
-            collection_uuid = kwargs.get('pk')
+            collection_uuid = kwargs.get("pk")
             collection = Collection.objects.get(uuid=collection_uuid, user=request.user)
-            serializer = CollectionSerializer(collection, context={'request': request, 'view': self})
+            serializer = CollectionSerializer(collection, context={"request": request, "view": self})
             return Response(serializer.data)
         except Collection.DoesNotExist:
             message = "Collection not found."
             logger_error.error(message)
-            return Response(
-                {"success": False, "message": message},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"success": False, "message": message}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger_error.error(str(e))
             message = "An unexpected error occurred. Please try again later."
@@ -193,22 +178,18 @@ class MovieCollectionViewSet(ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         try:
-            collection_uuid = kwargs.get('pk')
+            collection_uuid = kwargs.get("pk")
             collection = Collection.objects.get(uuid=collection_uuid, user=request.user)
 
             # Delete the collection
             collection.delete()
 
             return Response(
-                {"success": True, "message": "Collection deleted successfully."},
-                status=status.HTTP_204_NO_CONTENT
+                {"success": True, "message": "Collection deleted successfully."}, status=status.HTTP_204_NO_CONTENT
             )
 
         except Collection.DoesNotExist:
-            return Response(
-                {"success": False, "message": "Collection not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"success": False, "message": "Collection not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger_error.error(str(e))
             return Response(
@@ -220,12 +201,12 @@ class MovieCollectionViewSet(ModelViewSet):
 class RequestCountView(APIView):
 
     def get(self, request, *args, **kwargs):
-        request_count = cache.get('request_count', 0)
+        request_count = cache.get("request_count", 0)
         return Response({"requests": request_count}, status=status.HTTP_200_OK)
 
 
 class ResetRequestCountView(APIView):
 
     def post(self, request, *args, **kwargs):
-        cache.set('request_count', 0)
+        cache.set("request_count", 0)
         return Response({"message": "request count reset successfully"}, status=status.HTTP_201_CREATED)

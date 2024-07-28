@@ -11,18 +11,16 @@ class MovieService:
     def __init__(self):
         self.config = ConfigSingleton()
         self.api_client = APIClientFactory(
-            self.config.MOVIE_API_URL,
-            self.config.MOVIE_API_USERNAME,
-            self.config.MOVIE_API_PASSWORD
+            self.config.MOVIE_API_URL, self.config.MOVIE_API_USERNAME, self.config.MOVIE_API_PASSWORD
         ).create_client()
 
     @retry(tries=3, delay=2, backoff=2)
     def fetch_movies(self, page=1):
-        cache_key = f'movies_page_{page}'
+        cache_key = f"movies_page_{page}"
         data = cache.get(cache_key)
 
         if not data:
-            data = self.api_client.get('movies', params={'page': page})
+            data = self.api_client.get("movies", params={"page": page})
             cache.set(cache_key, data, timeout=300)  # Cache for 5 minutes
 
         return data
@@ -39,15 +37,15 @@ class MovieCollectionService:
         Save movies and link genres.
         """
         for movie_data in movies_data:
-            movie_uuid = movie_data.get('uuid')
-            movie, created = Movie.objects.get_or_create(uuid=movie_uuid, defaults={
-                'title': movie_data.get('title'),
-                'description': movie_data.get('description')
-            })
+            movie_uuid = movie_data.get("uuid")
+            movie, created = Movie.objects.get_or_create(
+                uuid=movie_uuid,
+                defaults={"title": movie_data.get("title"), "description": movie_data.get("description")},
+            )
 
             if created:
                 # If the movie is created, we need to link genres
-                genre_names = movie_data.get('genres', '').split(',')
+                genre_names = movie_data.get("genres", "").split(",")
                 for genre_name in genre_names:
                     genre, _ = Genre.objects.get_or_create(name=genre_name.strip())
                     MovieGenre.objects.get_or_create(movie=movie, genre=genre)
@@ -66,22 +64,22 @@ class CollectionUpdateService:
             raise NotFound("Collection not found.")
 
         # Update collection details
-        collection.title = data.get('title', collection.title)
-        collection.description = data.get('description', collection.description)
+        collection.title = data.get("title", collection.title)
+        collection.description = data.get("description", collection.description)
         collection.save()
 
         # Update movies in the collection
-        movies_data = data.get('movies', [])
+        movies_data = data.get("movies", [])
         for movie_data in movies_data:
-            movie_uuid = movie_data.get('uuid')
-            movie, created = Movie.objects.get_or_create(uuid=movie_uuid, defaults={
-                'title': movie_data.get('title'),
-                'description': movie_data.get('description')
-            })
+            movie_uuid = movie_data.get("uuid")
+            movie, created = Movie.objects.get_or_create(
+                uuid=movie_uuid,
+                defaults={"title": movie_data.get("title"), "description": movie_data.get("description")},
+            )
 
             if created:
                 # Link genres if the movie is newly created
-                genre_names = movie_data.get('genres', '').split(',')
+                genre_names = movie_data.get("genres", "").split(",")
                 for genre_name in genre_names:
                     genre, _ = Genre.objects.get_or_create(name=genre_name.strip())
                     MovieGenre.objects.get_or_create(movie=movie, genre=genre)

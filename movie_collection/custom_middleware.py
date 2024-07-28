@@ -34,7 +34,7 @@ class TokenInvalidatedMiddleware:
 
 
 class RequestCounterMiddleware(MiddlewareMixin):
-    REQUEST_COUNT_CACHE_KEY = 'request_count'
+    REQUEST_COUNT_CACHE_KEY = "request_count"
 
     def process_request(self, request):
         try:

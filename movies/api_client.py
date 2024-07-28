@@ -22,13 +22,9 @@ class APIClient:
 
     def get(self, endpoint, params=None, timeout=5):
         url = f"{self.base_url}"
-        print('url: => ', url)
+        print("url: => ", url)
         response = requests.get(
-            url,
-            params=params,
-            auth=HTTPBasicAuth(self.username, self.password),
-            timeout=timeout,
-            verify=False
+            url, params=params, auth=HTTPBasicAuth(self.username, self.password), timeout=timeout, verify=False
         )
         response.raise_for_status()
         return response.json()

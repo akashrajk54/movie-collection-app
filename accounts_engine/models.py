@@ -26,11 +26,10 @@ class CustomUser(AbstractUser, BaseClass):
         verbose_name=_("Phone Number"),
         unique=True,
         help_text=_("Enter phone number in international format, e.g., +12122222222"),
-        null=True, blank=True
+        null=True,
+        blank=True,
     )
-    deleted_contact_number = models.CharField(
-        null=True, blank=True
-    )
+    deleted_contact_number = models.CharField(null=True, blank=True)
     is_active = models.BooleanField(_("active"), default=True)
     is_admin = models.BooleanField(default=False)
 

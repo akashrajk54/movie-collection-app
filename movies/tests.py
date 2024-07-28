@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
-from movies.models import Collection, Movie, Genre
+from movies.models import Collection
 from movies.factories import UserFactory, CollectionFactory, MovieFactory, GenreFactory
 
 
@@ -20,11 +20,13 @@ class TestMovieCollectionViewSet:
         data = {
             "title": "My Collection",
             "description": "My favorite movies",
-            "movies": [{"uuid": str(movie.uuid), "title": movie.title, "description": movie.description, "genres": genre.name}]
+            "movies": [
+                {"uuid": str(movie.uuid), "title": movie.title, "description": movie.description, "genres": genre.name}
+            ],
         }
-        url = reverse('movie-collection-list')
+        url = reverse("movie-collection-list")
 
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
 
         assert response.status_code == status.HTTP_201_CREATED
         assert Collection.objects.count() == 1
@@ -32,12 +34,12 @@ class TestMovieCollectionViewSet:
 
     def test_list_collections(self):
         CollectionFactory(user=self.user)
-        url = reverse('movie-collection-list')
+        url = reverse("movie-collection-list")
 
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['data']['collections']) == 1
+        assert len(response.data["data"]["collections"]) == 1
 
     def test_update_collection(self):
         collection = CollectionFactory(user=self.user)
@@ -46,11 +48,13 @@ class TestMovieCollectionViewSet:
         data = {
             "title": "Updated Collection",
             "description": "Updated description",
-            "movies": [{"uuid": str(movie.uuid), "title": movie.title, "description": movie.description, "genres": genre.name}]
+            "movies": [
+                {"uuid": str(movie.uuid), "title": movie.title, "description": movie.description, "genres": genre.name}
+            ],
         }
-        url = reverse('movie-collection-detail', kwargs={'pk': collection.uuid})  # Adjust with your actual URL name
+        url = reverse("movie-collection-detail", kwargs={"pk": collection.uuid})  # Adjust with your actual URL name
 
-        response = self.client.put(url, data, format='json')
+        response = self.client.put(url, data, format="json")
 
         assert response.status_code == status.HTTP_200_OK
         collection.refresh_from_db()
@@ -58,7 +62,7 @@ class TestMovieCollectionViewSet:
 
     def test_delete_collection(self):
         collection = CollectionFactory(user=self.user)
-        url = reverse('movie-collection-detail', kwargs={'pk': collection.uuid})
+        url = reverse("movie-collection-detail", kwargs={"pk": collection.uuid})
 
         response = self.client.delete(url)
 
@@ -67,9 +71,9 @@ class TestMovieCollectionViewSet:
 
     def test_retrieve_collection(self):
         collection = CollectionFactory(user=self.user)
-        url = reverse('movie-collection-detail', kwargs={'pk': collection.uuid})
+        url = reverse("movie-collection-detail", kwargs={"pk": collection.uuid})
 
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['title'] == collection.title
+        assert response.data["title"] == collection.title
