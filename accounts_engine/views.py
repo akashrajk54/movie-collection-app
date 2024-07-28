@@ -70,6 +70,12 @@ class CustomUserViewSet(ModelViewSet):
                 serializer = self.get_serializer(data=request.data)
                 try:
                     serializer.is_valid(raise_exception=True)
+                    self.perform_create(serializer)
+                    instance = serializer.instance
+                    instance.password = make_password(instance.password)
+                    instance.save()
+                    refresh_token = RefreshToken.for_user(instance)
+
                 except ValidationError as e:
                     error_detail = e.detail
                     for field_name, errors in error_detail.items():
@@ -81,11 +87,6 @@ class CustomUserViewSet(ModelViewSet):
                                 status=e.status_code,
                             )
 
-                    self.perform_create(serializer)
-                    instance = serializer.instance
-                    instance.password = make_password(instance.password)
-                    instance.save()
-                    refresh_token = RefreshToken.for_user(instance)
             else:
                 instance = user_queryset.first()
                 refresh_token = RefreshToken.for_user(instance)

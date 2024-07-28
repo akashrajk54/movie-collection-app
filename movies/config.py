@@ -14,9 +14,7 @@ class ConfigSingleton:
         # Load environment variables or settings
         self.MOVIE_API_URL = os.getenv("MOVIE_API_URL", "https://demo.credy.in/api/v1/maya/movies/")
         self.MOVIE_API_USERNAME = os.getenv("MOVIE_API_USERNAME", "iNd3jDMYRKsN1pjQPMRz2nrq7N99q4Tsp9EY9cM0")
-        self.MOVIE_API_PASSWORD = os.getenv(
-            "MOVIE_API_PASSWORD",
-            "Ne5DoTQt7p8qrgkPdtenTK8zd6MorcCR5vXZIJNfJwvfafZfcOs4reyasVYddTyXCz9hcL5FGGIVxw3q02ibnBLhblivqQTp4BIC93LZHj4OppuHQUzwugcYu7TIC5H1",)  # noqa: E501
+        self.MOVIE_API_PASSWORD = os.getenv("MOVIE_API_PASSWORD", "Ne5DoTQt7p8qrgkPdtenTK8zd6MorcCR5vXZIJNfJwvfafZfcOs4reyasVYddTyXCz9hcL5FGGIVxw3q02ibnBLhblivqQTp4BIC93LZHj4OppuHQUzwugcYu7TIC5H1")  # noqa: E501
 
 
 # Usage:
