@@ -2,8 +2,9 @@ from django.core.cache import cache
 from retry import retry
 from movies.config import ConfigSingleton
 from movies.api_client import APIClientFactory
-from .models import Movie, Genre, MovieGenre, MovieCollection
+from movies.models import Collection, Movie, Genre, MovieGenre, MovieCollection
 from django.db import transaction
+from rest_framework.exceptions import NotFound
 
 
 class MovieService:
@@ -54,3 +55,39 @@ class MovieCollectionService:
             # Add movie to the collection
             MovieCollection.objects.get_or_create(user=self.user, collection=self.collection, movie=movie)
 
+
+class CollectionUpdateService:
+
+    @staticmethod
+    def update_collection_and_movies(user, collection_uuid, data):
+        try:
+            collection = Collection.objects.get(uuid=collection_uuid, user=user)
+        except Collection.DoesNotExist:
+            raise NotFound("Collection not found.")
+
+        # Update collection details
+        collection.title = data.get('title', collection.title)
+        collection.description = data.get('description', collection.description)
+        collection.save()
+
+        # Update movies in the collection
+        movies_data = data.get('movies', [])
+        for movie_data in movies_data:
+            movie_uuid = movie_data.get('uuid')
+            movie, created = Movie.objects.get_or_create(uuid=movie_uuid, defaults={
+                'title': movie_data.get('title'),
+                'description': movie_data.get('description')
+            })
+
+            if created:
+                # Link genres if the movie is newly created
+                genre_names = movie_data.get('genres', '').split(',')
+                for genre_name in genre_names:
+                    genre, _ = Genre.objects.get_or_create(name=genre_name.strip())
+                    MovieGenre.objects.get_or_create(movie=movie, genre=genre)
+
+            # Check if the movie is already in the collection
+            if not MovieCollection.objects.filter(collection=collection, movie=movie).exists():
+                MovieCollection.objects.create(user=user, collection=collection, movie=movie)
+
+        return collection

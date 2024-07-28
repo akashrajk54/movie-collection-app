@@ -19,7 +19,7 @@ from .models import MovieCollection
 from .serializers import CollectionSerializer
 
 from accounts_engine.status_code import INTERNAL_SERVER_ERROR
-from movies.movie_service import MovieService, MovieCollectionService
+from movies.movie_service import MovieService, MovieCollectionService, CollectionUpdateService
 from rest_framework.response import Response
 from accounts_engine.utils import (
     success_true_response,
@@ -73,14 +73,15 @@ class MovieCollectionViewSet(ModelViewSet):
         try:
             user = request.user
             data = request.data.copy()
-            collection_data = {
-                'title': data.get('title'),
-                'description': data.get('description'),
-                'user': user.id
-            }
+            data['user'] = user.id
+            # collection_data = {
+            #     'title': data.get('title'),
+            #     'description': data.get('description'),
+            #     'user': user.id
+            # }
 
             # Create the collection
-            collection_serializer = CollectionSerializer(data=collection_data)
+            collection_serializer = CollectionSerializer(data=data, context={'request': request})
             collection_serializer.is_valid(raise_exception=True)
             collection = collection_serializer.save()
 
@@ -89,9 +90,8 @@ class MovieCollectionViewSet(ModelViewSet):
             self.MovieCollectionService.save_movies_and_link_genres(data.get('movies', []))
 
             collection_uuid = collection_serializer.data.get('uuid')
-            return Response(success_true_response(
-                message="Collection and movies created successfully.",
-                data={"collection_uuid": collection_uuid}),
+            return Response(
+                {"collection_uuid": collection_uuid},
                 status=status.HTTP_201_CREATED
             )
 
@@ -101,8 +101,9 @@ class MovieCollectionViewSet(ModelViewSet):
                 for error in errors:
                     message = str(error)
                     logger_error.error(message)
+                    message = {"message": message}
                     return Response(
-                        success_false_response(message=message),
+                        message,
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -133,57 +134,28 @@ class MovieCollectionViewSet(ModelViewSet):
             favorite_genres_list = [genre['genre__name'] for genre in favorite_genres]
             favorite_genres_str = ', '.join(favorite_genres_list)
 
-            return Response(success_true_response(
-                message="Collections and favorite genres retrieved successfully.",
-                data={"collections": collection_serializer.data, "favourite_genres": favorite_genres_str}),
+            return Response({
+                "is_success": True,
+                "data": {"collections": collection_serializer.data, "favourite_genres": favorite_genres_str}},
                 status=status.HTTP_200_OK
             )
 
         except Exception as e:
             message = str(e)
-            # You may want to log this error message using a logger
+            logger_error.error(message)
             return Response(
-                success_false_response(message="An error occurred while retrieving collections."),
+                success_false_response(message="An unexpected error occurred. Please try again later."),
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     def update(self, request, *args, **kwargs):
         try:
             collection_uuid = kwargs.get('pk')
-            collection = Collection.objects.get(uuid=collection_uuid, user=request.user)
-
             data = request.data
-            title = data.get('title', collection.title)
-            description = data.get('description', collection.description)
-
-            # Update the collection details
-            collection.title = title
-            collection.description = description
-            collection.save()
-
-            # Update movies in the collection
-            movies_data = data.get('movies', None)
-            if movies_data:
-                for movie_data in movies_data:
-                    movie_uuid = movie_data.get('uuid')
-                    movie, created = Movie.objects.get_or_create(uuid=movie_uuid, defaults={
-                        'title': movie_data.get('title'),
-                        'description': movie_data.get('description')
-                    })
-
-                    if created:
-                        # Link genres if the movie is newly created
-                        genre_names = movie_data.get('genres', '').split(',')
-                        for genre_name in genre_names:
-                            genre, _ = Genre.objects.get_or_create(name=genre_name.strip())
-                            MovieGenre.objects.get_or_create(movie=movie, genre=genre)
-
-                    # Check if the movie is already in the collection
-                    if not MovieCollection.objects.filter(collection=collection, movie=movie).exists():
-                        MovieCollection.objects.create(user=request.user, collection=collection, movie=movie)
+            CollectionUpdateService.update_collection_and_movies(request.user, collection_uuid, data)
 
             return Response(
-                {"success": True, "message": "Collection and movies updated successfully."},
+                {"collection_uuid": collection_uuid},
                 status=status.HTTP_200_OK
             )
 
@@ -206,14 +178,17 @@ class MovieCollectionViewSet(ModelViewSet):
             serializer = CollectionSerializer(collection, context={'request': request, 'view': self})
             return Response(serializer.data)
         except Collection.DoesNotExist:
+            message = "Collection not found."
+            logger_error.error(message)
             return Response(
-                {"success": False, "message": "Collection not found."},
+                {"success": False, "message": message},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             logger_error.error(str(e))
+            message = "An unexpected error occurred. Please try again later."
             return Response(
-                {"success": False, "message": "An unexpected error occurred. Please try again later."},
+                {"success": False, "message": message},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -244,12 +219,14 @@ class MovieCollectionViewSet(ModelViewSet):
 
 
 class RequestCountView(APIView):
+
     def get(self, request, *args, **kwargs):
         request_count = cache.get('request_count', 0)
         return Response({"requests": request_count})
 
 
 class ResetRequestCountView(APIView):
+
     def post(self, request, *args, **kwargs):
         cache.set('request_count', 0)
         return Response({"message": "request count reset successfully"}, status=status.HTTP_200_OK)

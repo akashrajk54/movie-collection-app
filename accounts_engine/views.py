@@ -97,7 +97,7 @@ class CustomUserViewSet(ModelViewSet):
 
             message = "Congratulation! you successfully login."
             logger_info.info(f"{message} username: {instance.username}")
-            return Response(success_true_response(data=response_data, message=message))
+            return Response(response_data)
 
         except Exception as e:
             message = str(e)
