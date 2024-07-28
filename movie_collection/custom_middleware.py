@@ -1,5 +1,7 @@
 import logging
 from django.http import JsonResponse
+from django.utils.deprecation import MiddlewareMixin
+from django.core.cache import cache
 
 from accounts_engine.utils import success_false_response
 from accounts_engine.models import InvalidatedToken
@@ -29,12 +31,6 @@ class TokenInvalidatedMiddleware:
 
         response = self.get_response(request)
         return response
-
-
-from django.utils.deprecation import MiddlewareMixin
-from django.core.cache import cache
-
-# REQUEST_COUNT_CACHE_KEY = 'request_count'
 
 
 class RequestCounterMiddleware(MiddlewareMixin):

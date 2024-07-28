@@ -44,13 +44,12 @@ class MovieAPIView(APIView):
             movies_data = movie_service.fetch_movies(page=int(page_number))
             logger_info.info(f"Fetched movies for page {page_number}")
 
-            message = "Successfully fetched movies data."
-            return Response(success_true_response(data=movies_data, message=message))
+            return Response(movies_data, status=status.HTTP_200_OK)
         except Exception as e:
             logger_error.error(f"Error fetching movies: {str(e)}")
             return Response(
-                success_false_response(message="Internal server error"),
-                status=INTERNAL_SERVER_ERROR,
+                success_false_response(message="An unexpected error occurred. Please try again later."),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
@@ -222,11 +221,11 @@ class RequestCountView(APIView):
 
     def get(self, request, *args, **kwargs):
         request_count = cache.get('request_count', 0)
-        return Response({"requests": request_count})
+        return Response({"requests": request_count}, status=status.HTTP_200_OK)
 
 
 class ResetRequestCountView(APIView):
 
     def post(self, request, *args, **kwargs):
         cache.set('request_count', 0)
-        return Response({"message": "request count reset successfully"}, status=status.HTTP_200_OK)
+        return Response({"message": "request count reset successfully"}, status=status.HTTP_201_CREATED)
