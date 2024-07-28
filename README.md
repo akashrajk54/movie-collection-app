@@ -8,8 +8,10 @@ This repository contains a Django-based web application for managing movie colle
        git clone https://github.com/akashrajk54/movie-collection-app.git
 
    2. Navigate to the project directory:
-       cd movie-collection-app
-       Create a folder with the name "logs" this is important otherwise you will get a logger error.
+      
+      cd movie-collection-app
+
+      Create a folder with the name "logs" this is important otherwise you will get a logger error.
 
    4. Create a virtual environment (optional but recommended):
        python -m venv venv
