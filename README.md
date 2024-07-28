@@ -9,20 +9,21 @@ This repository contains a Django-based web application for managing movie colle
 
    2. Navigate to the project directory:
        cd movie-collection-app
+       Create a folder with the name "logs" this is important otherwise you will get a logger error.
 
-   3. Create a virtual environment (optional but recommended):
+   4. Create a virtual environment (optional but recommended):
        python -m venv venv
 
-   4. Activate the virtual environment:
+   5. Activate the virtual environment:
       a). Windows:
           venv\Scripts\activate
       b). Linux/macOS:
           source venv/bin/activate
 
-   5. Install dependencies:
+   6. Install dependencies:
       pip install -r requirements.txt
 
-   6. Set up environment variables by creating a .env file:
+   7. Set up environment variables by creating a .env file:
 
        ## DATABASE Use: PostgresSQL
        DATABASE_NAME=
@@ -40,15 +41,15 @@ This repository contains a Django-based web application for managing movie colle
 
       ## Please Update DEFAULT_THROTTLE_RATES into the settings currently set to 100/Hours
 
-   7. Run migrations to create the database schema:
+   8. Run migrations to create the database schema:
       python manage.py makemigrations
       python manage.py makemigrations accounts_engine
       python manage.py makemigrations movies
       python manage.py migrate
 
-   8. Create a superuser (admin) account:
+   9. Create a superuser (admin) account:
       python manage.py createsuperuser  # Put a username and password.
 
-   9. Run the development server:
+   10. Run the development server:
       python manage.py runserver
       (by default it will use 8000 port)
