@@ -44,14 +44,19 @@ This repository contains a Django-based web application for managing movie colle
       ## Please Update DEFAULT_THROTTLE_RATES into the settings currently set to 100/Hours
 
    8. Run migrations to create the database schema:
+
       python manage.py makemigrations
+
       python manage.py makemigrations accounts_engine
+
       python manage.py makemigrations movies
+
       python manage.py migrate
 
-   9. Create a superuser (admin) account:
+   10. Create a superuser (admin) account:
+
       python manage.py createsuperuser  # Put a username and password.
 
-   10. Run the development server:
-      python manage.py runserver
-      (by default it will use 8000 port)
+   12. Run the development server:
+
+      python manage.py runserver (by default it will use 8000 port)
