@@ -25,3 +25,41 @@ class MovieService:
             cache.set(cache_key, data, timeout=300)  # Cache for 5 minutes
 
         return data
+
+
+#
+# from movies.models import MovieCollection, Collection, Movie, Genre, MovieGenre
+# from rest_framework.exceptions import ValidationError
+#
+#
+# class MovieCollectionService:
+#     @staticmethod
+#     def create_collection_with_movies(user, collection_data, movies_data):
+#         # Create the collection
+#         collection = Collection.objects.create(
+#             title=collection_data['title'],
+#             description=collection_data['description'],
+#             user=user
+#         )
+#
+#         # Process movies data
+#         for movie_data in movies_data:
+#             movie_uuid = movie_data.get('uuid')
+#             movie, created = Movie.objects.get_or_create(uuid=movie_uuid, defaults={
+#                 'title': movie_data.get('title'),
+#                 'description': movie_data.get('description')
+#             })
+#
+#             if created:
+#                 # If the movie is created, we need to link genres
+#                 genre_names = movie_data.get('genres', '').split(',')
+#                 for genre_name in genre_names:
+#                     genre, _ = Genre.objects.get_or_create(name=genre_name.strip())
+#                     MovieGenre.objects.get_or_create(movie=movie, genre=genre)
+#
+#             # Add movie to the collection
+#             MovieCollection.objects.get_or_create(user=user, collection=collection, movie=movie)
+#
+#         return collection
+
+

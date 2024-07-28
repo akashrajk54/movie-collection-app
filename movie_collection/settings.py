@@ -69,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "movie_collection.custom_middleware.TokenInvalidatedMiddleware",
+    "movie_collection.custom_middleware.RequestCounterMiddleware",
 ]
 
 ROOT_URLCONF = 'movie_collection.urls'
@@ -245,3 +246,13 @@ TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 MOVIE_API_USERNAME = os.getenv('MOVIE_API_USERNAME')
 MOVIE_API_PASSWORD = os.getenv('MOVIE_API_PASSWORD')
 MOVIE_API_URL = 'https://demo.credy.in/api/v1/maya/movies/'
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}

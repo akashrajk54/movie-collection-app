@@ -29,3 +29,26 @@ class TokenInvalidatedMiddleware:
 
         response = self.get_response(request)
         return response
+
+
+from django.utils.deprecation import MiddlewareMixin
+from django.core.cache import cache
+
+# REQUEST_COUNT_CACHE_KEY = 'request_count'
+
+
+class RequestCounterMiddleware(MiddlewareMixin):
+    REQUEST_COUNT_CACHE_KEY = 'request_count'
+
+    def process_request(self, request):
+        try:
+            # Check if the request count key exists
+            if cache.get(self.REQUEST_COUNT_CACHE_KEY) is not None:
+                # Increment the request count if the key exists
+                cache.incr(self.REQUEST_COUNT_CACHE_KEY)
+            else:
+                # Set the request count to 1 if the key does not exist
+                cache.set(self.REQUEST_COUNT_CACHE_KEY, 1)
+        except Exception as e:
+            # Log the exception or handle as needed
+            print(f"Error incrementing request count: {e}")
