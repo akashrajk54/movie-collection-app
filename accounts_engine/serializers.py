@@ -16,7 +16,7 @@ class CustomUserSerializer(ModelSerializer):
         if self.context.get("request").method == "POST":
             contact = data.get("contact")
 
-            if not has_country_code(contact):
+            if contact and not has_country_code(contact):
                 message = "Phone number does not have a country code."
                 raise serializers.ValidationError(message)
 
@@ -46,7 +46,3 @@ class CustomUserSerializer(ModelSerializer):
             fields = {field: fields[field] for field in allowed_fields}
 
         return fields
-
-
-class VerifyAccountSerializer(serializers.Serializer):
-    otp = serializers.CharField()

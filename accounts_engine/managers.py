@@ -4,18 +4,18 @@ from django.utils.translation import gettext_lazy as _
 
 class CustomUserManager(BaseUserManager):
     """
-    Custom user model manager where contact is the unique identifiers
+    Custom user model manager where username is the unique identifiers
     for authentication instead of usernames.
     """
 
-    def create_user(self, contact, password=None, **extra_fields):
+    def create_user(self, username, password=None, **extra_fields):
         """
-        Create and save a User with the given contact and password.
+        Create and save a User with the given username and password.
         """
-        if not contact:
-            raise ValueError(_("The Contact must be set"))
-        contact = self.normalize_email(contact)
-        user = self.model(contact=contact, **extra_fields)
+        if not username:
+            raise ValueError(_("The username must be set"))
+        username = self.normalize_email(username)
+        user = self.model(username=username, **extra_fields)
         # user.set_password(password)
 
         # Set the password to an empty string if it's not provided
@@ -27,9 +27,9 @@ class CustomUserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, contact, password, **extra_fields):
+    def create_superuser(self, username, password, **extra_fields):
         """
-        Create and save a SuperUser with the given contact and password.
+        Create and save a SuperUser with the given username and password.
         """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -39,4 +39,4 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_("Superuser must have is_staff=True."))
         if extra_fields.get("is_superuser") is not True:
             raise ValueError(_("Superuser must have is_superuser=True."))
-        return self.create_user(contact, password, **extra_fields)
+        return self.create_user(username, password, **extra_fields)

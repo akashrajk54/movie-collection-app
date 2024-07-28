@@ -1,4 +1,5 @@
 # views.py
+from django.db import transaction
 from rest_framework import status
 
 from .models import MovieCollection, Movie, Genre, MovieGenre, Collection
@@ -7,18 +8,18 @@ import logging
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
+from django.core.cache import cache
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from dotenv import load_dotenv
 from django.db.models import Count
 from rest_framework.viewsets import ModelViewSet
 
-from accounts_engine import status_code
 from .models import MovieCollection
 from .serializers import CollectionSerializer
 
 from accounts_engine.status_code import INTERNAL_SERVER_ERROR
-from .movie_service import MovieService
+from movies.movie_service import MovieService, MovieCollectionService
 from rest_framework.response import Response
 from accounts_engine.utils import (
     success_true_response,
@@ -53,57 +54,21 @@ class MovieAPIView(APIView):
             )
 
 
-# class MovieCollectionViewSet(ModelViewSet):
-#     queryset = MovieCollection.objects.all()
-#     serializer_class = MovieCollectionSerializer
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
-#
-#     def create(self, request, *args, **kwargs):
-#         try:
-#             user = request.user
-#             requested_data = request.data.copy()
-#             requested_data["user"] = user.id
-#             serializer = self.get_serializer(data=requested_data)
-#
-#             try:
-#                 serializer.is_valid(raise_exception=True)
-#
-#                 self.perform_create(serializer)
-#                 instance = serializer.instance
-#                 message = "Successfully movie added to collection."
-#                 logger_info.info(f"{message} by {user.username}")
-#                 return Response(
-#                     success_true_response(data={"uuid": instance.uuid}, message=message),
-#                     status=status_code.CREATED,
-#                 )
-#
-#             except ValidationError as e:
-#                 error_detail = e.detail
-#                 for field_name, errors in error_detail.items():
-#                     for error in errors:
-#                         message = str(error)
-#                         logger_error.error(message)
-#                         return Response(
-#                             success_false_response(message=message),
-#                             status=e.status_code,
-#                         )
-#
-#         except Exception as e:
-#             message = str(e)
-#             logger_error.error(message)
-#             return Response(
-#                 success_false_response(message="An unexpected error occurred. Please try again later."),
-#                 status=status_code.INTERNAL_SERVER_ERROR,
-#             )
-
-
 class MovieCollectionViewSet(ModelViewSet):
     queryset = MovieCollection.objects.all()
     serializer_class = CollectionSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.MovieCollectionService = None
+
+    def initialize_service(self, user, collection):
+        # Initialize the service with the necessary context
+        self.MovieCollectionService = MovieCollectionService(user, collection)
+
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         try:
             user = request.user
@@ -119,27 +84,14 @@ class MovieCollectionViewSet(ModelViewSet):
             collection_serializer.is_valid(raise_exception=True)
             collection = collection_serializer.save()
 
-            # Process movies data
-            movies_data = data.get('movies', [])
-            for movie_data in movies_data:
-                movie_uuid = movie_data.get('uuid')
-                movie, created = Movie.objects.get_or_create(uuid=movie_uuid, defaults={
-                    'title': movie_data.get('title'),
-                    'description': movie_data.get('description')
-                })
+            # Initialize the movie service and process movies data
+            self.initialize_service(user, collection)
+            self.MovieCollectionService.save_movies_and_link_genres(data.get('movies', []))
 
-                if created:
-                    # If the movie is created, we need to link genres
-                    genre_names = movie_data.get('genres', '').split(',')
-                    for genre_name in genre_names:
-                        genre, _ = Genre.objects.get_or_create(name=genre_name.strip())
-                        MovieGenre.objects.get_or_create(movie=movie, genre=genre)
-
-                # Add movie to the collection
-                MovieCollection.objects.get_or_create(user=user, collection=collection, movie=movie)
-
-            return Response(
-                {"success": True, "message": "Collection and movies processed successfully.", "data": collection_serializer.data},
+            collection_uuid = collection_serializer.data.get('uuid')
+            return Response(success_true_response(
+                message="Collection and movies created successfully.",
+                data={"collection_uuid": collection_uuid}),
                 status=status.HTTP_201_CREATED
             )
 
@@ -150,7 +102,7 @@ class MovieCollectionViewSet(ModelViewSet):
                     message = str(error)
                     logger_error.error(message)
                     return Response(
-                        {"success": False, "message": message},
+                        success_false_response(message=message),
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
@@ -158,37 +110,42 @@ class MovieCollectionViewSet(ModelViewSet):
             message = str(e)
             logger_error.error(message)
             return Response(
-                {"success": False, "message": "An unexpected error occurred. Please try again later."},
+                success_false_response(message="An unexpected error occurred. Please try again later."),
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     def list(self, request, *args, **kwargs):
-        user = request.user
+        try:
+            user = request.user
 
-        # Get collections for the user
-        collections = Collection.objects.filter(user=user)
-        collection_serializer = CollectionSerializer(collections, many=True)
+            # Get collections for the user
+            collections = Collection.objects.filter(user=user)
+            collection_serializer = CollectionSerializer(collections, many=True, context={'request': request, 'view': self})
 
-        # Get favorite genres
-        favorite_genres = (
-            MovieGenre.objects.filter(movie__movie_collections__user=user)
-            .values('genre__name')
-            .annotate(genre_count=Count('genre'))
-            .order_by('-genre_count')[:3]
-        )
+            # Get favorite genres
+            favorite_genres = (
+                MovieGenre.objects.filter(movie__movie_collections__user=user)
+                .values('genre__name')
+                .annotate(genre_count=Count('genre'))
+                .order_by('-genre_count')[:3]
+            )
 
-        favorite_genres_list = [genre['genre__name'] for genre in favorite_genres]
-        favorite_genres_str = ', '.join(favorite_genres_list)
+            favorite_genres_list = [genre['genre__name'] for genre in favorite_genres]
+            favorite_genres_str = ', '.join(favorite_genres_list)
 
-        response_data = {
-            "is_success": True,
-            "data": {
-                "collections": collection_serializer.data,
-                "favourite_genres": favorite_genres_str,
-            }
-        }
+            return Response(success_true_response(
+                message="Collections and favorite genres retrieved successfully.",
+                data={"collections": collection_serializer.data, "favourite_genres": favorite_genres_str}),
+                status=status.HTTP_200_OK
+            )
 
-        return Response(response_data)
+        except Exception as e:
+            message = str(e)
+            # You may want to log this error message using a logger
+            return Response(
+                success_false_response(message="An error occurred while retrieving collections."),
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     def update(self, request, *args, **kwargs):
         try:
@@ -246,7 +203,7 @@ class MovieCollectionViewSet(ModelViewSet):
         try:
             collection_uuid = kwargs.get('pk')
             collection = Collection.objects.get(uuid=collection_uuid, user=request.user)
-            serializer = CollectionSerializer(collection)
+            serializer = CollectionSerializer(collection, context={'request': request, 'view': self})
             return Response(serializer.data)
         except Collection.DoesNotExist:
             return Response(
@@ -284,13 +241,6 @@ class MovieCollectionViewSet(ModelViewSet):
                 {"success": False, "message": "An unexpected error occurred. Please try again later."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-# views.py
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.core.cache import cache
-from rest_framework import status
 
 
 class RequestCountView(APIView):

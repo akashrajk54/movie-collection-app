@@ -20,23 +20,21 @@ class BaseClass(models.Model):
 class CustomUser(AbstractUser, BaseClass):
     objects = CustomUserManager()
 
-    username = models.CharField(_("username"), max_length=50, blank=True, null=True)
+    username = models.CharField(_("username"), max_length=50, unique=True, blank=True, null=True)
     about = models.CharField(max_length=255, null=True, blank=True)
     contact = PhoneNumberField(
         verbose_name=_("Phone Number"),
         unique=True,
         help_text=_("Enter phone number in international format, e.g., +12122222222"),
+        null=True, blank=True
     )
     deleted_contact_number = models.CharField(
         null=True, blank=True
-    )  # when user delete at that time store original contact number in this field.
-    otp = models.CharField(max_length=4, null=True, blank=True)
-    otp_send_datetime = models.DateTimeField(null=True, blank=True)
-    last_otp_status = models.CharField(null=True, blank=True)
-    is_active = models.BooleanField(_("active"), default=False)
+    )
+    is_active = models.BooleanField(_("active"), default=True)
     is_admin = models.BooleanField(default=False)
 
-    USERNAME_FIELD = "contact"
+    USERNAME_FIELD = "username"
     REQUIRED_FIELDS = []
 
     class Meta:
@@ -44,8 +42,8 @@ class CustomUser(AbstractUser, BaseClass):
         verbose_name_plural = "Users"
         constraints = [
             models.UniqueConstraint(
-                fields=["contact", "is_delete"],
-                name="unique_customuser_contact_is_delete",
+                fields=["username", "is_delete"],
+                name="unique_customuser_username_is_delete",
             )
         ]
 

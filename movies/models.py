@@ -1,6 +1,6 @@
+import uuid
 from django.db import models
 from accounts_engine.models import BaseClass, CustomUser
-import uuid
 
 
 class Collection(BaseClass):
@@ -8,6 +8,9 @@ class Collection(BaseClass):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='collections')
     title = models.CharField(max_length=255)
     description = models.TextField()
+
+    class Meta:
+        unique_together = ('user', 'title')
 
     def __str__(self):
         return self.title
