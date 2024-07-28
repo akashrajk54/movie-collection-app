@@ -21,6 +21,8 @@ env/
 .env
 /logs/log.log
 
+.pytest_cache
+
 # Migrations
 movie_collection/__init__.py
 accounts_engine/__init__.py
