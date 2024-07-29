@@ -199,6 +199,8 @@ class MovieCollectionViewSet(ModelViewSet):
 
 
 class RequestCountView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         request_count = cache.get("request_count", 0)
@@ -206,6 +208,8 @@ class RequestCountView(APIView):
 
 
 class ResetRequestCountView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         cache.set("request_count", 0)
